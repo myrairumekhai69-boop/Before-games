@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Before Game</title>
+  <title>Before — Scene 1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="introScreen">
-    <h1>Before: The Game</h1>
-    <button id="startButton">Start</button>
+  <div id="overlay">
+    <h1 id="loadingText">Game Starting...</h1>
   </div>
 
-  <div id="gameScreen">
-    <h2>Game Starting...</h2>
-  </div>
+  <canvas id="gameCanvas"></canvas>
+
+  <audio id="bgMusic" src="piano.mp3" preload="auto"></audio>
+  <audio id="rainSound" src="rain.mp3" preload="auto" loop></audio>
 
   <script src="script.js"></script>
 </body>

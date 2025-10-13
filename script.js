@@ -41,3 +41,6 @@ ambient.volume = 0.4;
 ambient.play().catch(() => {
   console.log('Autoplay blocked, sound will start after user interaction');
 });
+document.getElementById('startBtn').addEventListener('click', () => {
+  alert('Game starting soon!');
+});

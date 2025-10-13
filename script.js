@@ -1,116 +1,95 @@
-const canvas = document.getElementById("gameCanvas");
+// ====== Scene 1: Rain & Character Intro ======
+const canvas = document.createElement("canvas");
+document.body.appendChild(canvas);
 const ctx = canvas.getContext("2d");
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const overlay = document.getElementById("overlay");
-const bgMusic = document.getElementById("bgMusic");
-const rainSound = document.getElementById("rainSound");
-const footstepSound = document.getElementById("footstepSound");
-
+// Background fade effect
 let opacity = 0;
-let player = { x: canvas.width / 2, y: canvas.height - 100, speed: 5 };
-let keys = {};
-let showTamara = false;
 
-// 🌧️ Rain
-let drops = [];
-for (let i = 0; i < 200; i++) {
-  drops.push({
+// Load rain sound
+const rainSound = new Audio("https://cdn.pixabay.com/download/audio/2023/03/16/audio_4c1c6ffec5.mp3?filename=rain-and-thunder-ambient-14415.mp3");
+rainSound.loop = true;
+rainSound.volume = 0.6;
+
+// Start sound once player interacts
+window.addEventListener("click", () => {
+  rainSound.play();
+});
+
+// Player object
+const player = {
+  x: canvas.width / 2 - 15,
+  y: canvas.height - 100,
+  width: 30,
+  height: 60,
+  color: "rgba(255,255,255,0.85)",
+  speed: 5
+};
+
+// Keyboard input
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+// Rain drops
+const rain = [];
+for (let i = 0; i < 150; i++) {
+  rain.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    speed: 4 + Math.random() * 4,
-    length: 10 + Math.random() * 10
+    length: Math.random() * 15 + 10,
+    speed: Math.random() * 4 + 2
   });
 }
 
-function drawRain() {
-  ctx.strokeStyle = "rgba(180,180,255,0.3)";
+// Draw player and rain
+function draw() {
+  ctx.fillStyle = "rgba(0,0,0,1)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Fade-in background
+  if (opacity < 1) opacity += 0.002;
+  ctx.globalAlpha = opacity;
+
+  // Draw rain
+  ctx.strokeStyle = "rgba(255,255,255,0.4)";
   ctx.lineWidth = 1;
-  for (let drop of drops) {
+  rain.forEach(drop => {
     ctx.beginPath();
     ctx.moveTo(drop.x, drop.y);
     ctx.lineTo(drop.x, drop.y + drop.length);
     ctx.stroke();
-  }
-}
 
-function updateRain() {
-  for (let drop of drops) {
     drop.y += drop.speed;
-    if (drop.y > canvas.height) {
-      drop.y = 0 - drop.length;
-      drop.x = Math.random() * canvas.width;
-    }
-  }
+    if (drop.y > canvas.height) drop.y = -10;
+  });
+
+  ctx.globalAlpha = 1;
+
+  // Draw player
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
-function drawPlayer() {
-  ctx.fillStyle = "rgba(255,255,255,0.8)";
-  ctx.fillRect(player.x - 10, player.y - 50, 20, 50);
+// Update player position
+function update() {
+  if (keys["ArrowLeft"] || keys["a"]) player.x -= player.speed;
+  if (keys["ArrowRight"] || keys["d"]) player.x += player.speed;
+  if (keys["ArrowUp"] || keys["w"]) player.y -= player.speed;
+  if (keys["ArrowDown"] || keys["s"]) player.y += player.speed;
+
+  // Keep player within screen
+  player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
+  player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
 }
 
-function drawTamara() {
-  ctx.fillStyle = "rgba(255,255,255,0.2)";
-  ctx.fillRect(canvas.width / 2 + 150, canvas.height - 130, 20, 50);
+// Game loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
-
-function fadeInScene() {
-  ctx.fillStyle = `rgba(0,0,0,${1 - opacity})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  if (opacity < 1) opacity += 0.01;
-}
-
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawRain();
-  updateRain();
-
-  if (keys["ArrowLeft"] || keys["ArrowRight"]) {
-    if (footstepSound.paused) {
-      footstepSound.currentTime = 0;
-      footstepSound.play();
-    }
-  } else {
-    footstepSound.pause();
-  }
-
-  if (keys["ArrowLeft"]) player.x -= player.speed;
-  if (keys["ArrowRight"]) player.x += player.speed;
-
-  drawPlayer();
-  if (showTamara) drawTamara();
-  fadeInScene();
-  requestAnimationFrame(animate);
-}
-
-// 🎬 Start sequence
-window.addEventListener("load", () => {
-  bgMusic.volume = 0.6;
-  rainSound.volume = 0.3;
-  footstepSound.volume = 0.4;
-
-  bgMusic.play();
-  setTimeout(() => rainSound.play(), 2000);
-
-  // Fade out piano after 8s
-  const fadeOutMusic = setInterval(() => {
-    if (bgMusic.volume > 0.01) {
-      bgMusic.volume -= 0.01;
-    } else {
-      bgMusic.pause();
-      clearInterval(fadeOutMusic);
-    }
-  }, 300);
-
-  // Overlay fade out
-  setTimeout(() => overlay.classList.add("fade-out"), 2000);
-
-  // Tamara appears
-  setTimeout(() => (showTamara = true), 10000);
-
-  animate();
-});
-
-window.addEventListener("keydown", e => (keys[e.key] = true));
-window.addEventListener("keyup", e => (keys[e.key] = false));
+loop();

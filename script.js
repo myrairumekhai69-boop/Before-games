@@ -6,13 +6,14 @@ canvas.height = window.innerHeight;
 const overlay = document.getElementById("overlay");
 const bgMusic = document.getElementById("bgMusic");
 const rainSound = document.getElementById("rainSound");
+const footstepSound = document.getElementById("footstepSound");
 
-let opacity = 0; // fade-in control
+let opacity = 0;
 let player = { x: canvas.width / 2, y: canvas.height - 100, speed: 5 };
 let keys = {};
 let showTamara = false;
 
-// 🌧️ simple rain particles
+// 🌧️ Rain
 let drops = [];
 for (let i = 0; i < 200; i++) {
   drops.push({
@@ -65,6 +66,15 @@ function animate() {
   drawRain();
   updateRain();
 
+  if (keys["ArrowLeft"] || keys["ArrowRight"]) {
+    if (footstepSound.paused) {
+      footstepSound.currentTime = 0;
+      footstepSound.play();
+    }
+  } else {
+    footstepSound.pause();
+  }
+
   if (keys["ArrowLeft"]) player.x -= player.speed;
   if (keys["ArrowRight"]) player.x += player.speed;
 
@@ -78,11 +88,12 @@ function animate() {
 window.addEventListener("load", () => {
   bgMusic.volume = 0.6;
   rainSound.volume = 0.3;
+  footstepSound.volume = 0.4;
 
   bgMusic.play();
   setTimeout(() => rainSound.play(), 2000);
 
-  // Fade out piano after 8 seconds
+  // Fade out piano after 8s
   const fadeOutMusic = setInterval(() => {
     if (bgMusic.volume > 0.01) {
       bgMusic.volume -= 0.01;
@@ -92,15 +103,14 @@ window.addEventListener("load", () => {
     }
   }, 300);
 
-  // Fade out overlay
+  // Overlay fade out
   setTimeout(() => overlay.classList.add("fade-out"), 2000);
 
-  // Tamara appears slowly
+  // Tamara appears
   setTimeout(() => (showTamara = true), 10000);
 
   animate();
 });
 
-// Controls
 window.addEventListener("keydown", e => (keys[e.key] = true));
 window.addEventListener("keyup", e => (keys[e.key] = false));

@@ -4,74 +4,66 @@
   box-sizing: border-box;
 }
 
-body {
-  background: radial-gradient(circle at center, #0a0a0a, #000);
-  color: white;
-  font-family: 'Poppins', sans-serif;
+body, html {
+  height: 100%;
+  background-color: #000;
   overflow: hidden;
-  height: 100vh;
-  width: 100vw;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
 }
 
-.intro {
+#overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,1));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
   text-align: center;
 }
 
 h1 {
-  font-size: 4rem;
-  letter-spacing: 3px;
+  font-size: 4em;
+  letter-spacing: 6px;
+  animation: fadeIn 3s ease-in-out;
 }
 
-p {
-  font-size: 1.2rem;
+.subtitle {
+  font-size: 1.2em;
+  color: #bbb;
   margin-top: 10px;
-  color: #ccc;
+  animation: fadeIn 4s ease-in-out;
 }
 
 button {
-  margin-top: 25px;
-  padding: 10px 25px;
-  background: #ff0055;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 1rem;
+  margin-top: 40px;
+  padding: 10px 20px;
+  font-size: 1em;
+  background: none;
+  border: 1px solid #888;
+  color: #fff;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background: #ff3380;
-}
-
-.fade-in {
-  opacity: 0;
-  animation: fadeIn 2s forwards;
-}
-
-.delay {
-  animation-delay: 1s;
-}
-
-.delay2 {
-  animation-delay: 2s;
+  background-color: rgba(255,255,255,0.1);
+  border-color: #fff;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-canvas {
-  position: fixed;
+#gameCanvas {
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: none;
-  background: linear-gradient(120deg, #111, #222);
+  background: radial-gradient(circle, #111 0%, #000 100%);
 }

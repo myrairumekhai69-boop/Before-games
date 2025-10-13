@@ -1,72 +1,77 @@
-/* 🌌 Background setup */
-body {
+* {
   margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle at center, #202020, #0d0d0d);
-  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(circle at center, #0a0a0a, #000);
   color: white;
-  font-family: Arial, sans-serif;
-}
-
-/* 🎮 Screens */
-#intro-screen, #game-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
   height: 100vh;
-  transition: opacity 1s ease;
+  width: 100vw;
 }
 
-/* 🚪 Hide / Show + Fade Effects */
-.hidden {
-  display: none;
+.intro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 
-.fade-out {
-  animation: fadeOut 1s forwards;
+h1 {
+  font-size: 4rem;
+  letter-spacing: 3px;
+}
+
+p {
+  font-size: 1.2rem;
+  margin-top: 10px;
+  color: #ccc;
+}
+
+button {
+  margin-top: 25px;
+  padding: 10px 25px;
+  background: #ff0055;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  background: #ff3380;
 }
 
 .fade-in {
-  animation: fadeIn 1s forwards;
+  opacity: 0;
+  animation: fadeIn 2s forwards;
 }
 
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+.delay {
+  animation-delay: 1s;
+}
+
+.delay2 {
+  animation-delay: 2s;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 🧍 Player styling */
-.player {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #2af598, #009efd);
-  border-radius: 10px;
-  box-shadow: 0 0 10px #2af598, 0 0 20px #009efd;
-  position: relative;
-  animation: idle 2s infinite ease-in-out;
-}
-
-/* 🕹️ Exploring animation */
-.player.exploring {
-  animation: explore 1s infinite ease-in-out;
-}
-
-/* Idle = gentle breathing motion */
-@keyframes idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* Explore = side-to-side walking motion */
-@keyframes explore {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(10px); }
-  50% { transform: translateX(0); }
-  75% { transform: translateX(-10px); }
-  100% { transform: translateX(0); }
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  background: linear-gradient(120deg, #111, #222);
 }

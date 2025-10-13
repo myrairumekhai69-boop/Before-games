@@ -15,3 +15,20 @@ body {
   box-shadow: 0 0 10px #2af598, 0 0 20px #009efd;
   transition: transform 0.1s linear;
 }
+.hidden {
+  display: none;
+}
+
+#intro-screen, #game-screen {
+  text-align: center;
+  color: white;
+  transition: opacity 1s ease;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+.fade-in {
+  opacity: 1;
+}

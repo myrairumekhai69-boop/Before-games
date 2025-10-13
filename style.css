@@ -74,3 +74,31 @@ body::after {
   background: radial-gradient(circle at bottom, rgba(255,140,0,0.2), transparent);
   pointer-events: none;
 }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #2b5876, #4e4376);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+button {
+  background-color: #ff7f50;
+  border: none;
+  padding: 10px 20px;
+  color: white;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #ff5722;
+}

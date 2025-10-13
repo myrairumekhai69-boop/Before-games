@@ -1,43 +1,72 @@
-/* Before: Game Styles */
+/* 🌌 Background setup */
 body {
   margin: 0;
   height: 100vh;
   background: radial-gradient(circle at center, #202020, #0d0d0d);
   overflow: hidden;
+  color: white;
+  font-family: Arial, sans-serif;
 }
 
-.player {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #2af598, #009efd);
-  border-radius: 8px;
-  box-shadow: 0 0 10px #2af598, 0 0 20px #009efd;
-  transition: transform 0.1s linear;
+/* 🎮 Screens */
+#intro-screen, #game-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  transition: opacity 1s ease;
 }
+
+/* 🚪 Hide / Show + Fade Effects */
 .hidden {
   display: none;
 }
 
-#intro-screen, #game-screen {
-  text-align: center;
-  color: white;
-  transition: opacity 1s ease;
-}
-
 .fade-out {
-  opacity: 0;
+  animation: fadeOut 1s forwards;
 }
 
 .fade-in {
-  opacity: 1;
-}
-@keyframes explore {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(15px); }
-  100% { transform: translateX(0); }
+  animation: fadeIn 1s forwards;
 }
 
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 🧍 Player styling */
+.player {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #2af598, #009efd);
+  border-radius: 10px;
+  box-shadow: 0 0 10px #2af598, 0 0 20px #009efd;
+  position: relative;
+  animation: idle 2s infinite ease-in-out;
+}
+
+/* 🕹️ Exploring animation */
 .player.exploring {
-  animation: explore 4s infinite ease-in-out;
+  animation: explore 1s infinite ease-in-out;
+}
+
+/* Idle = gentle breathing motion */
+@keyframes idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Explore = side-to-side walking motion */
+@keyframes explore {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(10px); }
+  50% { transform: translateX(0); }
+  75% { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
 }

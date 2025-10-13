@@ -1,72 +1,73 @@
-// updated version test — redeploy trigger
-
+// Get canvas and context
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Overlay and button elements
 const overlay = document.getElementById("overlay");
 const startBtn = document.getElementById("startBtn");
+
+// Play background music
 const bgMusic = document.getElementById("bgMusic");
+bgMusic.volume = 0.3;
 
-let particles = [];
+// Fade-out and start animation
+startBtn.addEventListener("click", () => {
+  bgMusic.play();
+  overlay.style.transition = "opacity 1.2s ease";
+  overlay.style.opacity = "0";
 
-// Particle class
-class Particle {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = Math.random() * 2 + 1;
-    this.speedX = Math.random() * 1 - 0.5;
-    this.speedY = Math.random() * 1 - 0.5;
-    this.alpha = 1;
-  }
-
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    if (this.size > 0.2) this.size -= 0.02;
-    this.alpha -= 0.01;
-  }
-
-  draw() {
-    ctx.fillStyle = `rgba(255, 60, 60, ${this.alpha})`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-// Handle particles
-function handleParticles() {
-  for (let i = 0; i < particles.length; i++) {
-    particles[i].update();
-    particles[i].draw();
-    if (particles[i].size <= 0.3 || particles[i].alpha <= 0) {
-      particles.splice(i, 1);
-      i--;
-    }
-  }
-}
-
-// On canvas click, create particles
-canvas.addEventListener("click", e => {
-  for (let i = 0; i < 10; i++) {
-    particles.push(new Particle(e.x, e.y));
-  }
+  setTimeout(() => {
+    overlay.style.display = "none";
+    startAnimation();
+  }, 1200);
 });
 
-// Animation loop
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  handleParticles();
-  requestAnimationFrame(animate);
+// Particle setup
+const particles = [];
+
+for (let i = 0; i < 150; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 3 + 1,
+    speedX: (Math.random() - 0.5) * 1.5,
+    speedY: (Math.random() - 0.5) * 1.5,
+  });
 }
 
-// Start button click event
-startBtn.addEventListener("click", () => {
-  overlay.style.display = "none";
-  bgMusic.volume = 0.5;
-  bgMusic.play();
+function drawParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+  particles.forEach((p) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function updateParticles() {
+  particles.forEach((p) => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+
+    if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+  });
+}
+
+function startAnimation() {
+  function animate() {
+    drawParticles();
+    updateParticles();
+    requestAnimationFrame(animate);
+  }
   animate();
+}
+
+// Adjust canvas on resize
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 });

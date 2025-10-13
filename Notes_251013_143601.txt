@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Before — Third-Person Open Prototype</title>
+<style>
+  :root{
+    --bg:#0c1220; --ui:#e7f3ff; --accent:#ffd166; --glass: rgba(255,255,255,0.06);
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(#071020,#0b1426);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ui);-webkit-font-smoothing:antialiased}
+  #wrap{display:flex;flex-direction:column;align-items:center;padding:12px;gap:8px}
+  #topbar{width:100%;max-width:1200px;display:flex;justify-content:space-between;align-items:center}
+  #title{font-weight:700;font-size:18px}
+  #info{color:#a8b7d0;font-size:13px}
+  canvas{width:100%;max-width:1200px;height:auto;border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,0.6);background:#081123;display:block}
+  #hud{width:100%;max-width:1200px;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  .panel{background:var(--glass);padding:8px 10px;border-radius:10px;color:var(--ui);font-size:13px}
+  #controlsSmall{color:#9fb0d6;font-size:12px}
+  #joy{position:fixed;left:18px;bottom:18px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.02);display:none;z-index:30}
+  #stick{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.06)}
+  #dashBtn{position:fixed;right:20px;bottom:28px;padding:12px 14px;border-radius:12px;background:var(--accent);color:#000;font-weight:700;border:none;display:none;z-index:30}
+  @media (pointer:coarse){
+    #joy{display:block}
+    #dashBtn{display:block}
+  }
+  #minimap{width:140px;height:90px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);overflow:hidden}
+  #overlay{max-width:1200px;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  button.link{background:none;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--ui)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <div id="title">Before — Third-person Prototype</div>
+    <div id="info">W/A/S/D or ↑/←/↓/→ to move • Space = Dash • Click + drag on mobile joystick</div>
+  </div>
+
+  <canvas id="c" width="1200" height="720"></canvas>
+
+  <div id="hud">
+    <div class="panel" id="stats">Speed: <span id="speed">0</span> • Score: <span id="score">0</span></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div id="minimap" class="panel"></div>
+      <div class="panel" id="controlsSmall">Lives: <span id="lives">3</span></div>
+      <button class="link" id="resetBtn">Restart</button>
+    </div>
+  </div>
+</div>
+
+<div id="joy"><div id="stick"></div></div>
+<button id="dashBtn">DASH</button>
+
+<script>
+/* The full game script - same as the prototype I gave earlier.
+   (Third-person camera, simple city grid, NPCs + pickups, keyboard & touch)
+   If you need a trimmed version, tell me. */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = canvas.width, H = canvas.height;
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(W * ratio);
+  canvas.height = Math.floor(H * ratio);
+  canvas.style.width = Math.min(window.innerWidth - 28, 1200) + 'px';
+  canvas.style.height = (canvas.height / canvas.width) * parseFloat(canvas.style.width) + 'px';
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const world = { sizeX: 4000, sizeZ: 4000 };
+const city = {blocks: []};
+(function generateCity(){
+  const block = 480;
+  for(let x = -2; x <= 2; x++){
+    for(let z = -2; z <= 2; z++){
+      const bx = x * block;
+      const bz = z * block;
+      let height = 80 + Math.floor(Math.random()*220);
+      if(Math.abs(bx) < 480 && Math.abs(bz) < 480) height += 120;
+      city.blocks.push({x: bx, z: bz, w: 360, d: 360, h: height});
+    }
+  }
+})();
+
+const player = { x: 0, z: 400, heading: Math.PI, speed: 0, maxSpeed: 6.6, acc: 0.18, friction: 0.04, radius: 18, hp: 100, lives: 3, dashTimer: 0, dashCooldown: 0 };
+
+let npcs = [];
+let pickups = [];
+function spawnNPCs(){ npcs = []; for(let i=0;i<24;i++){ const angle = Math.random()*Math.PI*2; const r = 400 + Math.random()*1000; const nx = Math.cos(angle)*r; const nz = Math.sin(angle)*r; const spd = 0.6 + Math.random() * 1.6; npcs.push({x:nx, z:nz, spd, type: Math.random()<0.6 ? 'car' : 'ped', dir: Math.random()<0.5?1:-1}); } }
+function spawnPickups(){ pickups = []; for(let i=0;i<18;i++){ const angle = Math.random()*Math.PI*2; const r = 200 + Math.random()*1300; pickups.push({x: Math.cos(angle)*r, z: Math.sin(angle)*r, r:8}); } }
+spawnNPCs(); spawnPickups();
+
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if(e.key === ' ') attemptDash(); });
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+function attemptDash(){ if(player.dashCooldown <= 0){ player.dashTimer = 18; player.dashCooldown = 160; } }
+
+const joy = document.getElementById('joy');
+const stick = document.getElementById('stick');
+const dashBtn = document.getElementById('dashBtn');
+let touchId = null; let joyVec = {x:0,y:0};
+joy.addEventListener('touchstart',e=>{ e.preventDefault(); const t = e.changedTouches[0]; touchId = t.identifier; updateStickPosition(t); }, {passive:false});
+joy.addEventListener('touchmove',e=>{ e.preventDefault(); for(const t of e.changedTouches) if(t.identifier === touchId) updateStickPosition(t); }, {passive:false});
+joy.addEventListener('touchend',e=>{ for(const t of e.changedTouches) if(t.identifier === touchId){ touchId = null; resetStick(); } }, {passive:false});
+function updateStickPosition(t){ const rect = joy.getBoundingClientRect(); const x = t.clientX - rect.left; const y = t.clientY - rect.top; const cx = rect.width/2, cy = rect.height/2; const dx = x - cx, dy = y - cy; const max = 48; const nx = Math.max(-max, Math.min(max, dx)); const ny = Math.max(-max, Math.min(max, dy)); stick.style.left = (cx + nx - 28) + 'px'; stick.style.top = (cy + ny - 28) + 'px'; joyVec.x = nx / max; joyVec.y = ny / max; }
+function resetStick(){ stick.style.left = '50%'; stick.style.top = '50%'; joyVec.x = 0; joyVec.y = 0; }
+dashBtn.addEventListener('touchstart', e=>{ e.preventDefault(); attemptDash(); });
+
+const camera = {x:0,y:120,z:0, tilt:0.78, followDist: 220, offsetY: 70};
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t)=> a + (b-a)*t;
+let score = 0;
+let best = parseInt(localStorage.getItem('before_best')||'0',10);
+function dist2(a,b){ const dx=a.x-b.x, dz=a.z-b.z; return Math.sqrt(dx*dx + dz*dz); }
+
+let lastT = performance.now();
+function update(now){
+  const dt = Math.min(40, now - lastT) / 16.666;
+  lastT = now;
+  let forward = 0, turn = 0;
+  if(keys['w'] || keys['arrowup']) forward += 1;
+  if(keys['s'] || keys['arrowdown']) forward -= 0.8;
+  if(keys['a'] || keys['arrowleft']) turn -= 1;
+  if(keys['d'] || keys['arrowright']) turn += 1;
+  if(Math.abs(joyVec.y) > 0.05) forward += -joyVec.y;
+  if(Math.abs(joyVec.x) > 0.05) turn += joyVec.x * 1.0;
+  player.heading += turn * 0.04 * (player.speed*0.08 + 1) * dt;
+  if(forward > 0.05) player.speed += player.acc * forward * dt;
+  else player.speed -= player.friction * dt;
+  player.speed = clamp(player.speed, -2.2, player.maxSpeed + (player.dashTimer>0?6.4:0));
+  if(player.dashTimer > 0){ player.dashTimer -= 1 * dt; score += 0.12 * dt; }
+  if(player.dashCooldown > 0) player.dashCooldown -= 1 * dt;
+  const moveDist = player.speed * (12 * dt);
+  player.x += Math.sin(player.heading) * -moveDist;
+  player.z += Math.cos(player.heading) * -moveDist;
+  player.x = clamp(player.x, -world.sizeX/2 + 40, world.sizeX/2 - 40);
+  player.z = clamp(player.z, -world.sizeZ/2 + 40, world.sizeZ/2 - 40);
+  for (const n of npcs){ n.x += Math.sin(n.dir) * n.spd * dt * 6; n.z += Math.cos(n.dir) * n.spd * dt * 6; if(Math.random() < 0.002 * dt) n.dir *= -1; }
+  for(let i = pickups.length - 1; i >= 0; i--){ const p = pickups[i]; if(dist2(p, player) < 40){ pickups.splice(i,1); score += 120; if(Math.random() < 0.4) spawnSinglePickupNearby(player.x + (Math.random()-0.5)*120, player.z + (Math.random()-0.5)*120); } }
+  for (const n of npcs){ if(dist2(n, player) < 32){ if(player.dashTimer > 0){ n.x += (n.x - player.x) * 6; n.z += (n.z - player.z) * 6; score += 8; } else { if(player.hp > 0){ player.hp -= 14; if(player.hp <= 0){ player.lives -= 1; document.getElementById('lives').textContent = player.lives; if(player.lives <= 0){ onGameOver(); } else { player.x = 0; player.z = 400; player.hp = 100; } } } } } }
+  for(const b of city.blocks){ if(player.x > b.x - b.w/2 - 24 && player.x < b.x + b.w/2 + 24 && player.z > b.z - b.d/2 - 24 && player.z < b.z + b.d/2 + 24){ const dx = player.x - b.x; const dz = player.z - b.z; const d = Math.hypot(dx,dz) + 0.0001; const push = ( (b.w/2 + 24) - Math.abs(dx) ) * 0.02 + ( (b.d/2 + 24) - Math.abs(dz) ) * 0.02; if(push > 0){ player.x += (dx/d) * push * dt * 6; player.z += (dz/d) * push * dt * 6; player.speed *= 0.92; } } }
+  if(Math.random() < 0.02 * dt && pickups.length < 28) spawnSinglePickup();
+  if(Math.random() < 0.006 * dt && npcs.length < 64) spawnNPCAtEdge();
+  document.getElementById('speed').textContent = (Math.abs(player.speed)).toFixed(1);
+  document.getElementById('score').textContent = Math.floor(score);
+  if(Math.floor(score) > best) { best = Math.floor(score); localStorage.setItem('before_best', best); }
+  if(forward <= 0 && player.speed > 0) player.speed = Math.max(0, player.speed - 0.02 * dt);
+  requestAnimationFrame(update);
+}
+
+function spawnSinglePickup(){ const angle = Math.random() * Math.PI * 2; const r = 300 + Math.random()*1400; pickups.push({x: Math.cos(angle)*r, z: Math.sin(angle)*r, r:8}); }
+function spawnSinglePickupNearby(x, z){ pickups.push({x: x + (Math.random()-0.5)*120, z: z + (Math.random()-0.5)*120, r:8}); }
+function spawnNPCAtEdge(){ const angle = Math.random() * Math.PI * 2; const r = Math.max(world.sizeX, world.sizeZ)/2 + 80; const nx = Math.cos(angle)*r; const nz = Math.sin(angle)*r; npcs.push({x:nx, z:nz, spd: 0.6 + Math.random()*1.2, type: Math.random()<0.6 ? 'car' : 'ped', dir: Math.random()<0.5?1:-1}); }
+
+function worldToScreen(wx, wz, cam){ const dx = wx - cam.x; const dz = wz - cam.z; const ch = cam.heading; const rx = dx * Math.cos(ch) - dz * Math.sin(ch); const rz = dx * Math.sin(ch) + dz * Math.cos(ch); const perspective = 900; const scale = perspective / (perspective + rz + 0.0001); const sx = (W/2) + rx * scale; const sy = (H/2) + (rz * 0.16) * scale - cam.y * scale; return {x: sx, y: sy, s: scale, rz}; }
+function worldToScreenBox(wx, wz, w, d, h, cam){ const top = worldToScreen(wx, wz - d*0.5, cam); const scale = top.s; return {x: top.x, y: top.y, s: scale, rz: top.rz, w, d, h}; }
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const camHeading = player.heading;
+  const camX = player.x - Math.sin(camHeading) * camera.followDist;
+  const camZ = player.z - Math.cos(camHeading) * camera.followDist;
+  const cam = {x: camX, z: camZ, y: camera.offsetY, heading: camHeading};
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0, '#071022'); sky.addColorStop(1, '#0b1730'); ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(6,10,14,0.14)'; ctx.fillRect(0, 0, W, H*0.55);
+  const drawables = [];
+  for(const b of city.blocks){ const p = worldToScreenBox(b.x, b.z, b.w, b.d, b.h, cam); if(p.s > 0.04) drawables.push({type:'block', p, b}); }
+  for(const p of pickups){ const s = worldToScreen(p.x, p.z, cam); if(s.s > 0.02) drawables.push({type:'pickup', s, p}); }
+  for(const n of npcs){ const s = worldToScreen(n.x, n.z, cam); if(s.s > 0.02) drawables.push({type:'npc', s, n}); }
+  drawables.sort((a,b)=>{ const ar = (a.p && a.p.rz) || (a.s && a.s.rz); const br = (b.p && b.p.rz) || (b.s && b.s.rz); return br - ar; });
+  drawGround(cam);
+  for(const d of drawables){ if(d.type === 'block') drawBlock(d.p, d.b); if(d.type === 'pickup') drawPickup(d.s, d.p); if(d.type === 'npc') drawNPC(d.s, d.n); }
+  const playerScreen = worldToScreen(player.x, player.z, cam);
+  drawPlayer(playerScreen, player);
+  drawMinimap(cam);
+}
+function drawBlock(p, b){ const sw = b.w * p.s; const sh = (b.h) * p.s * 0.55; ctx.save(); ctx.fillStyle = '#0f1724'; ctx.fillRect(p.x - sw/2, p.y - sh, sw, sh); ctx.fillStyle = 'rgba(180,210,255,0.06)'; const cols = Math.max(2, Math.floor(sw/28)); const rows = Math.max(2, Math.floor(sh/18)); for(let i=0;i<cols;i++){ for(let j=0;j<rows;j++){ if(Math.random() < 0.14) continue; const wx = p.x - sw/2 + 6 + i*(sw/(cols)); const wy = p.y - sh + 6 + j*(sh/(rows)); ctx.fillRect(wx, wy, Math.max(4, sw/cols - 8), Math.max(4, sh/rows - 6)); } } ctx.restore(); }
+function drawPickup(s, p){ ctx.beginPath(); ctx.fillStyle = 'rgba(255,209,102,0.95)'; ctx.arc(s.x, s.y - 8 * s.s, 10 * s.s, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.arc(s.x, s.y - 8 * s.s, 18 * s.s, 0, Math.PI*2); ctx.fill(); }
+function drawNPC(s, n){ ctx.save(); ctx.fillStyle = n.type === 'car' ? '#a5b1ff' : '#ffd1a6'; const w = 28 * s.s, h = 12 * s.s; ctx.fillRect(s.x - w/2, s.y - h/2, w, h); ctx.restore(); }
+function drawPlayer(s, pl){ ctx.save(); ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.ellipse(s.x, s.y + 22 * s.s, 46 * s.s, 12 * s.s, 0,0,Math.PI*2); ctx.fill(); ctx.fillStyle = '#cdf0ff'; const pw = 36 * s.s, ph = 56 * s.s; if(player.dashTimer > 0){ ctx.beginPath(); ctx.ellipse(s.x + 12 * s.s, s.y - 12 * s.s, pw*0.9, ph*0.45, 0,0,Math.PI*2); ctx.fillStyle = 'rgba(255,210,100,0.08)'; ctx.fill(); ctx.fillStyle = '#fff6d1'; } roundRect(ctx, s.x - pw/2, s.y - ph, pw, ph, 8 * s.s); ctx.restore(); }
+function drawGround(cam){ ctx.save(); ctx.fillStyle = 'rgba(6,8,12,0.22)'; ctx.fillRect(0, H - 140, W, 140); const p = (performance.now()*0.02)%220; ctx.fillStyle = 'rgba(255,255,255,0.02)'; for(let i=0;i<40;i++){ ctx.fillRect((i*120 - p), H-40, 40, 6); } ctx.restore(); }
+function drawMinimap(cam){ const mm = document.getElementById('minimap'); const mapW = mm.width = mm.clientWidth; const mapH = mm.height = mm.clientHeight; const ctxm = mm.getContext('2d'); ctxm.clearRect(0,0,mapW,mapH); ctxm.fillStyle = '#071122'; ctxm.fillRect(0,0,mapW,mapH); const scale = 0.06; ctxm.fillStyle = '#20314a'; for(const b of city.blocks){ const mx = mapW/2 + b.x*scale; const mz = mapH/2 + b.z*scale; ctxm.fillRect(mx - b.w*scale/2, mz - b.d*scale/2, b.w*scale, b.d*scale); } ctxm.fillStyle = '#ffd166'; for(const p of pickups) ctxm.fillRect(mapW/2 + p.x*scale - 2, mapH/2 + p.z*scale - 2, 4,4); ctxm.fillStyle = '#9fb0d6'; for(const n of npcs) ctxm.fillRect(mapW/2 + n.x*scale - 2, mapH/2 + n.z*scale - 2, 4,4); ctxm.fillStyle = '#cff0ff'; ctxm.beginPath(); ctxm.arc(mapW/2 + player.x*scale, mapH/2 + player.z*scale, 5, 0, Math.PI*2); ctxm.fill(); }
+function onGameOver(){ player.speed = 0; player.dashTimer = 0; const prevBest = parseInt(localStorage.getItem('before_best')||'0',10); if(Math.floor(score) > prevBest) localStorage.setItem('before_best', Math.floor(score)); alert('GAME OVER\nScore: ' + Math.floor(score) + '\nBest: ' + localStorage.getItem('before_best')); resetGame(); }
+document.getElementById('resetBtn').addEventListener('click', resetGame);
+function resetGame(){ player.x = 0; player.z = 400; player.heading = Math.PI; player.speed = 0; player.hp = 100; player.lives = 3; player.dashTimer = 0; player.dashCooldown = 0; pickups = []; npcs = []; spawnPickups(); spawnNPCs(); score = 0; document.getElementById('lives').textContent = player.lives; }
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath(); ctx.fill(); }
+function frame(){ draw(); requestAnimationFrame(frame); }
+requestAnimationFrame(update); requestAnimationFrame(frame);
+window.debug = {player, city, spawnPickup: spawnSinglePickup, spawnNPCAtEdge};
+document.getElementById('speed').textContent = '0.0';
+document.getElementById('score').textContent = '0';
+document.getElementById('lives').textContent = player.lives;
+</script>
+</body>
+</html>

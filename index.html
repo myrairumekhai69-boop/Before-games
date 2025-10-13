@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Before – 3D Adventure Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Before – An Adventure Story</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="intro">
-    <h1 class="fade-in">Before</h1>
-    <p class="fade-in delay">A browser-based 3D adventure experience</p>
-    <button id="startButton" class="fade-in delay2">Start Exploring</button>
+  <div id="overlay">
+    <h1>BEFORE</h1>
+    <p class="subtitle">An adventure-based story of love and survival</p>
+    <button id="startBtn">Begin</button>
   </div>
 
   <canvas id="gameCanvas"></canvas>
+
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/21/audio_15f2f5b3ee.mp3?filename=emotional-piano-ambient-124008.mp3" type="audio/mpeg">
+  </audio>
 
   <script src="script.js"></script>
 </body>

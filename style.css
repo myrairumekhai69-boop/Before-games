@@ -1,66 +1,35 @@
-/* General page setup */
 body {
-  margin: 0;
-  overflow: hidden;
-  background-color: black;
+  background: black;
   color: white;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* Canvas setup */
-#gameCanvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: block;
-}
-
-/* Overlay setup */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
+  font-family: 'Courier New', monospace;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+#introScreen {
+  text-align: center;
+}
+
+#startButton {
+  background: #00ff99;
+  border: none;
+  padding: 10px 20px;
+  color: black;
+  font-size: 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#startButton:hover {
+  background: #00ffaa;
+}
+
+#gameScreen {
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 10;
-}
-
-/* Title text */
-#overlay h1 {
-  font-size: 4em;
-  margin-bottom: 20px;
-  letter-spacing: 4px;
-  text-shadow: 0 0 20px red;
-  animation: fadeIn 2s ease-in-out;
-}
-
-/* Button styling */
-#startBtn {
-  background: crimson;
-  border: none;
-  padding: 15px 40px;
-  color: white;
-  font-size: 1.3em;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-#startBtn:hover {
-  background: darkred;
-  transform: scale(1.05);
-}
-
-/* Fade animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }

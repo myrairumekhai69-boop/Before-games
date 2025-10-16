@@ -1,0 +1,35 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ChoiceSystem : MonoBehaviour
+{
+    public GameObject choicePanel;
+    public Button choice1Button;
+    public Button choice2Button;
+
+    private System.Action choice1Action;
+    private System.Action choice2Action;
+
+    public void ShowChoices(string choice1Text, string choice2Text, System.Action choice1, System.Action choice2)
+    {
+        choicePanel.SetActive(true);
+
+        choice1Button.GetComponentInChildren<Text>().text = choice1Text;
+        choice2Button.GetComponentInChildren<Text>().text = choice2Text;
+
+        choice1Action = choice1;
+        choice2Action = choice2;
+
+        choice1Button.onClick.RemoveAllListeners();
+        choice2Button.onClick.RemoveAllListeners();
+
+        choice1Button.onClick.AddListener(() => MakeChoice(choice1Action));
+        choice2Button.onClick.AddListener(() => MakeChoice(choice2Action));
+    }
+
+    void MakeChoice(System.Action action)
+    {
+        choicePanel.SetActive(false);
+        action.Invoke();
+    }
+}
